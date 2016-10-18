@@ -25,7 +25,47 @@ function form.on(target, spec)
 end
 
 function form.spec(target)
+	local super = target._super or {}
 	target.tag = target.tag or form.tag
+	if target.super == nil
+	and super.super == nil then
+	function target:super()-- example. target:super().method(...)
+		local name = 'super_'
+		local super = self:spec(name)
+		if super == nil then
+			super = self._super
+			super = super and form.on(self, super)
+			self:spec(name, super)
+		end
+		return super or {}
+	end
+	print(target:tag()..':super() produced')
+	end
+	if target.interface == nil
+	and super.interface == nil then
+	function target:interface( name )
+		local name_ = name..'_'
+		local interface = self:spec(name_)
+		if interface == nil then
+			interface = self:spec(name)
+			interface = interface and form.on(self, interface)
+			self:spec(name_, interface)
+		end
+		return interface or {}
+	end
+	print(target:tag()..':interface( name ) produced')
+	end
+	if target.message == nil
+	and super.message == nil then
+	function target:message( method, option )
+		option = option or ''
+		local tx = option..', not implemented'
+		print(self:tag()..method..' '..tx)
+	end
+	print(target:tag()..':message( method, option ) produced')
+	end
+	if target.on == nil
+	and super.on == nil then
 	function target:on(target)
 		local tar = {}
 		local spec = self
@@ -38,12 +78,15 @@ function form.spec(target)
 	            tar[k] = v
 	        end
 	    end
-	    print(target:tag()..'['..spec._tag..'] target binding form produced')
+	    print(self:tag()..'['..spec._tag..'] target binding form produced')
 	    -- no such key binding to the target
 	    tar.on = nil
 	    tar.spec = nil
 	    return tar
 	end
+	end
+	if target.spec == nil
+	and super.spec == nil then
 	function target:spec(prop, target)
 		if  self._interface == nil then
 			self._interface = {}
@@ -73,9 +116,12 @@ function form.spec(target)
 	        end
 	        return self
 	    end
-	    local handler_prop = handler[type(prop)]
-	    return handler_prop and handler_prop(self, prop, target)
+	    handler = handler[type(prop)]
+	    return handler and handler(self, prop, target)
 	end
+	print(target:tag()..':spec(prop, target) produced')
+	end
+
 	return target
 end
 
